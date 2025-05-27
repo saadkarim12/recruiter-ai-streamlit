@@ -55,7 +55,7 @@ Tone: Friendly but professional. Format with headlines and bullet points. End wi
 """
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a recruiter writing LinkedIn job posts."},
             {"role": "user", "content": prompt}

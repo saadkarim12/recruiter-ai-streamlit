@@ -1,9 +1,15 @@
 import streamlit as st
+import openai
+import os
 
+# === CONFIGURATION ===
 st.set_page_config(page_title="Recruiter AI Job Form", layout="centered")
-st.title("🚀 Recruiter AI Agent - Job Input Form")
+openai.api_key = os.getenv("OPENAI_API_KEY") or "your_openai_api_key_here"
 
-# === Basic Job Info ===
+# === PAGE TITLE ===
+st.title("🚀 Recruiter AI Agent - Job Input & Post Generator")
+
+# === BASIC JOB INFO ===
 st.header("📌 Job Information")
 
 job_title = st.text_input("Job Title", placeholder="e.g., Senior DevOps Engineer")
@@ -13,7 +19,7 @@ location = st.text_input("Location", placeholder="City, Country")
 requirements = st.text_area("Job Requirements", height=150, placeholder="List role responsibilities, education, certifications, etc.")
 skills = st.text_area("Required Skills (comma-separated)", height=100, placeholder="e.g., Azure, Terraform, GitHub Actions")
 
-# === Screening Questions ===
+# === SCREENING QUESTIONS ===
 st.header("🧠 Screening Questions")
 
 question_1 = st.text_input("Screening Question 1", placeholder="e.g., How many years of experience do you have with Azure?")
@@ -22,7 +28,41 @@ answer_1 = st.text_input("Acceptable Answer 1", placeholder="e.g., 3+")
 question_2 = st.text_input("Screening Question 2", placeholder="e.g., Are you comfortable working remotely?")
 answer_2 = st.text_input("Acceptable Answer 2", placeholder="e.g., Yes")
 
-# === Submit Button ===
+# === GENERATE JOB POST FUNCTION ===
+def generate_linkedin_post(job_data):
+    skills_list = ", ".join(job_data["Skills"])
+    screening_prompt = "\n".join(
+        [f"- {q['question']} (Preferred: {q['answer']})" for q in job_data["Screening Questions"] if q["question"]]
+    )
+
+    prompt = f"""
+Create a professional and engaging LinkedIn job post with the following details:
+
+Job Title: {job_data['Job Title']}
+Location: {job_data['Location']}
+Job Type: {job_data['Job Type']}
+Experience Required: {job_data['Experience']}+ years
+Requirements: {job_data['Requirements']}
+Skills: {skills_list}
+
+Include these as screening questions:
+{screening_prompt}
+
+Tone: Friendly but professional. Format with headlines and bullet points. End with a call to action encouraging qualified candidates to apply.
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a recruiter writing LinkedIn job posts."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7
+    )
+
+    return response.choices[0].message.content
+
+# === SUBMIT BUTTON ===
 if st.button("✅ Submit"):
     job_data = {
         "Job Title": job_title,
@@ -38,5 +78,12 @@ if st.button("✅ Submit"):
     }
 
     st.success("🎉 Job input submitted successfully!")
-    st.markdown("### 🗂️ Final Job Data")
+
+    st.markdown("### 📋 Job Data Submitted")
     st.json(job_data)
+
+    with st.spinner("⏳ Generating LinkedIn Job Post..."):
+        linkedin_post = generate_linkedin_post(job_data)
+
+    st.markdown("### 📢 LinkedIn Job Post")
+    st.text_area("Copy this post for LinkedIn:", linkedin_post, height=300)

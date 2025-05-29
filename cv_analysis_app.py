@@ -95,7 +95,7 @@ if st.button("🔍 Analyze CVs") and uploaded_files and job_description:
         parsed["File Name"] = file.name
         results.append(parsed)
 
-    df = pd.DataFrame(results)[["File Name", "Summary", "Match", "Recommendation"]]
+    df = pd.DataFrame(results)[["File Name", "GPT Response"]]
     st.success("✅ Analysis complete.")
     st.dataframe(df)
 

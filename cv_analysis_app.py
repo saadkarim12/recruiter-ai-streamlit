@@ -22,13 +22,37 @@ uploaded_files = st.file_uploader("📎 Upload CVs (PDF or DOCX)", type=["pdf", 
 job_description = st.text_area("📌 Paste the Job Description", height=200)
 
 # === Extract Text Function ===
+from pdf2image import convert_from_path
+import pytesseract
+from PIL import Image
+
 def extract_text(file):
     if file.name.endswith(".pdf"):
+        # Try text extraction first
         reader = PdfReader(file)
-        return "\n".join([page.extract_text() or "" for page in reader.pages])
+        text = "\n".join([page.extract_text() or "" for page in reader.pages])
+        if text.strip():
+            return text
+
+        # If no text, use OCR
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(file.read())
+                tmp_path = tmp.name
+
+            images = convert_from_path(tmp_path)
+            text = ""
+            for image in images:
+                text += pytesseract.image_to_string(image)
+            return text
+
+        except Exception as e:
+            return f"❌ OCR failed: {e}"
+
     elif file.name.endswith(".docx"):
         doc = Document(file)
         return "\n".join([para.text for para in doc.paragraphs])
+
     return ""
 
 # === OpenAI Analysis ===

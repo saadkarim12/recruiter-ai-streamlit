@@ -60,6 +60,7 @@ Candidate Resume:
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
+        print("✅ RAW GPT response:", response)
         return response.choices[0].message.content.strip()
 
     except Exception as e:

@@ -32,13 +32,14 @@ def extract_text(file):
 
 # --- Parse GPT Response ---
 def parse_analysis(text):
-    summary = re.search(r"(?i)summary[:\-]?\s*(.+?)(?:\n|$)", text)
-    match = re.search(r"(?i)match|qualifications[:\-]?\s*(.+?)(?:\n|$)", text)
-    rec = re.search(r"(?i)recommendation[:\-]?\s*(.+)", text)
+    summary = re.search(r"Summary:\s*(.+)", text, re.IGNORECASE)
+    match = re.search(r"Match:\s*(.+)", text, re.IGNORECASE)
+    rec = re.search(r"Recommendation:\s*(.+)", text, re.IGNORECASE)
+
     return {
         "Summary": summary.group(1).strip() if summary else "N/A",
         "Match": match.group(1).strip() if match else "N/A",
-        "Recommendation": rec.group(1).strip() if rec else "N/A",
+        "Recommendation": rec.group(1).strip() if rec else "N/A"
     }
 
 # --- GPT Analysis Function ---
@@ -47,29 +48,32 @@ def analyze_cv(cv_text, jd_text):
         return "⚠️ No content extracted from CV."
 
     prompt = f"""
-You are a recruiter. Assess the following candidate against the job description.
+You are a technical recruiter. Assess the following candidate against the job description.
 
-Job Description:
+=== Job Description ===
 {jd_text}
 
-Candidate Resume:
+=== Candidate Resume ===
 {cv_text}
 
-Respond with:
-1. Summary of relevant experience
-2. How well they meet each qualification
-3. Recommendation (Yes/No + reason)
+Respond in this exact format:
+
+Summary: <short summary of experience>
+
+Match: <how well the candidate matches the qualifications>
+
+Recommendation: <Yes/No + reason>
 """
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o",  # or gpt-3.5-turbo
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,
+            temperature=0.4
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"❌ OpenAI Error: {e}"
+        return f"❌ OpenAI API Error: {e}"
 
 # --- Button Logic ---
 if st.button("🔍 Analyze CVs") and uploaded_files and job_description:

@@ -3,3 +3,5 @@ openai>=1.0.0
 pandas
 python-docx
 PyPDF2
+pytesseract
+pdf2image
